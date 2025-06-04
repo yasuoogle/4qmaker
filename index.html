@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>四象限メーカー</title>
+  <style>
+    /*―――――――――――――――――――――――――――――――――――――――――――
+      全体レイアウト（画面の余白やフォント等）
+    ――――――――――――――――――――――――――――――――――――――――――――*/
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-bottom: 16px;
+    }
+    .instructions {
+      margin-bottom: 12px;
+      color: #555;
+      font-size: 14px;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.4;
+    }
+
+    /*―――――――――――――――――――――――――――――――――――――――――――
+      四象限コンテナ（600×600px の正方形）
+    ――――――――――――――――――――――――――――――――――――――――――――*/
+    #quadrantContainer {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      border: 1px solid #aaa;
+      background-color: #fafafa;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    /*―――――――――――――――――――――――――――――――――――――――――――
+      真ん中に引く X 軸・Y 軸
+      ・水平線（X軸）は上下それぞれ50％のところに横幅100％で描画
+      ・垂直線（Y軸）は左右それぞれ50％のところに高さ100％で描画
+    ――――――――――――――――――――――――――――――――――――――――――――*/
+    #axisX {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: #333;
+      transform: translateY(-1px);
+      z-index: 1;
+    }
+    #axisY {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background-color: #333;
+      transform: translateX(-1px);
+      z-index: 1;
+    }
+
+    /*―――――――――――――――――――――――――――――――――――――――――――
+      各象限（Ⅰ～Ⅳ）を薄く色分け
+      ・背景色は視覚的に分かりやすいようにほんのり淡い色を設定
+      ・それぞれの象限に contenteditable なテキストを配置
+    ――――――――――――――――――――――――――――――――――――――――――――*/
+    .quadrant {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      /* テキストを中央に配置するために flex をつかう */
+      z-index: 0;
+    }
+    /* Ⅰ象限 (右上) */
+    #quad1 {
+      top: 0;
+      left: 50%;
+      background-color: rgba(200, 255, 200, 0.3);
+    }
+    /* Ⅱ象限 (左上) */
+    #quad2 {
+      top: 0;
+      left: 0;
+      background-color: rgba(255, 255, 200, 0.3);
+    }
+    /* Ⅲ象限 (左下) */
+    #quad3 {
+      top: 50%;
+      left: 0;
+      background-color: rgba(255, 200, 200, 0.3);
+    }
+    /* Ⅳ象限 (右下) */
+    #quad4 {
+      top: 50%;
+      left: 50%;
+      background-color: rgba(200, 200, 255, 0.3);
+    }
+
+    /*―――――――――――――――――――――――――――――――――――――――――――
+      各象限に置くテキスト（contenteditable）
+      ・ダブルクリックでフォーカスが入り編集開始
+      ・文字サイズや色は必要に応じて調整してください
+    ――――――――――――――――――――――――――――――――――――――――――――*/
+    .quadrant span {
+      font-size: 40px;
+      color: #333;
+      text-align: center;
+      outline: none;
+      cursor: text;
+    }
+    .quadrant span:empty::before {
+      content: "（入力）";
+      color: #999;
+      font-size: 40px;
+    }
+
+    /*―――――――――――――――――――――――――――――――――――――――――――
+      軸の端に置くラベル（contenteditable）
+      ・X軸の左端・右端：水平線上の左右に
+      ・Y軸の上端・下端：垂直線上の上下に
+    ――――――――――――――――――――――――――――――――――――――――――――*/
+    .axis-label {
+      position: absolute;
+      font-size: 40px;
+      color: #333;
+      background-color: rgba(255,255,255,0.8);
+      padding: 2px 4px;
+      border-radius: 2px;
+      outline: none;
+      cursor: text;
+      z-index: 2;
+      user-select: none;
+    }
+    /* X軸 左端 */
+    #xLeftLabel {
+      top: calc(50% + 10px);
+      left: 5px;
+      transform: translateY(-50%);
+    }
+    /* X軸 右端 */
+    #xRightLabel {
+      top: calc(50% + 10px);
+      right: 5px;
+      transform: translateY(-50%);
+    }
+    /* Y軸 上端 */
+    #yTopLabel {
+      top: 5px;
+      left: calc(50% + 10px);
+      transform: translateX(-50%);
+    }
+    /* Y軸 下端 */
+    #yBottomLabel {
+      bottom: 5px;
+      left: calc(50% + 10px);
+      transform: translateX(-50%);
+    }
+    .axis-label:empty::before {
+      content: "（入力）";
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>四象限ビジュアル（WYSIWYG 版）</h1>
+<!--  <p class="instructions">
+    ● 各象限（Ⅰ〜Ⅳ象限）の中央に直接テキストを入力できます。<br>
+    ● X軸や Y軸の端にもラベルを置いておき、クリックして入力・編集が可能です。<br>
+    ● 四象限の大きさ・軸の位置は固定なので、軸の最小／最大値は気にせずラベルだけ編集してください。
+  </p>
+-->
+  <div id="quadrantContainer">
+    <!-- X軸 (水平線) -->
+    <div id="axisX"></div>
+    <!-- Y軸 (垂直線) -->
+    <div id="axisY"></div>
+
+    <!-- Ⅰ象限 (右上) のテキストエリア -->
+    <div id="quad1" class="quadrant">
+      <span contenteditable="true" id="quad1Text"></span>
+    </div>
+    <!-- Ⅱ象限 (左上) のテキストエリア -->
+    <div id="quad2" class="quadrant">
+      <span contenteditable="true" id="quad2Text"></span>
+    </div>
+    <!-- Ⅲ象限 (左下) のテキストエリア -->
+    <div id="quad3" class="quadrant">
+      <span contenteditable="true" id="quad3Text"></span>
+    </div>
+    <!-- Ⅳ象限 (右下) のテキストエリア -->
+    <div id="quad4" class="quadrant">
+      <span contenteditable="true" id="quad4Text"></span>
+    </div>
+
+    <!-- 軸の端に置くラベル（contenteditable） -->
+    <span contenteditable="true" class="axis-label" id="xLeftLabel"></span>
+    <span contenteditable="true" class="axis-label" id="xRightLabel"></span>
+    <span contenteditable="true" class="axis-label" id="yTopLabel"></span>
+    <span contenteditable="true" class="axis-label" id="yBottomLabel"></span>
+  </div>
+
+</body>
+</html>
