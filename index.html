@@ -14,8 +14,10 @@
       flex-direction: column;
       align-items: center;
     }
+    /* 編集可能な h1 にカーソルを text に */
     h1 {
-      margin-bottom: 120px;
+      margin-bottom: 40px;
+      cursor: text;
     }
     .instructions {
       margin-bottom: 40px;
@@ -36,12 +38,11 @@
       border: 1px solid #aaa;
       background-color: #fafafa;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
 
     /*―――――――――――――――――――――――――――――――――――――――――――
       真ん中に引く X 軸・Y 軸
-      ・水平線（X軸）は上下それぞれ50％のところに横幅100％で描画
-      ・垂直線（Y軸）は左右それぞれ50％のところに高さ100％で描画
     ――――――――――――――――――――――――――――――――――――――――――――*/
     #axisX {
       position: absolute;
@@ -66,8 +67,6 @@
 
     /*―――――――――――――――――――――――――――――――――――――――――――
       各象限（Ⅰ～Ⅳ）を薄く色分け
-      ・背景色は視覚的に分かりやすいようにほんのり淡い色を設定
-      ・それぞれの象限に contenteditable なテキストを配置
     ――――――――――――――――――――――――――――――――――――――――――――*/
     .quadrant {
       position: absolute;
@@ -77,28 +76,23 @@
       justify-content: center;
       align-items: center;
       overflow: hidden;
-      /* テキストを中央に配置するために flex をつかう */
       z-index: 0;
     }
-    /* Ⅰ象限 (右上) */
     #quad1 {
       top: 0;
       left: 50%;
       background-color: rgba(200, 255, 200, 0.3);
     }
-    /* Ⅱ象限 (左上) */
     #quad2 {
       top: 0;
       left: 0;
       background-color: rgba(255, 255, 200, 0.3);
     }
-    /* Ⅲ象限 (左下) */
     #quad3 {
       top: 50%;
       left: 0;
       background-color: rgba(255, 200, 200, 0.3);
     }
-    /* Ⅳ象限 (右下) */
     #quad4 {
       top: 50%;
       left: 50%;
@@ -107,8 +101,6 @@
 
     /*―――――――――――――――――――――――――――――――――――――――――――
       各象限に置くテキスト（contenteditable）
-      ・ダブルクリックでフォーカスが入り編集開始
-      ・文字サイズや色は必要に応じて調整してください
     ――――――――――――――――――――――――――――――――――――――――――――*/
     .quadrant span {
       font-size: 40px;
@@ -125,8 +117,6 @@
 
     /*―――――――――――――――――――――――――――――――――――――――――――
       軸の端に置くラベル（contenteditable）
-      ・X軸の左端・右端：水平線上の左右に
-      ・Y軸の上端・下端：垂直線上の上下に
     ――――――――――――――――――――――――――――――――――――――――――――*/
     .axis-label {
       position: absolute;
@@ -140,25 +130,21 @@
       z-index: 2;
       user-select: none;
     }
-    /* X軸 左端 */
     #xLeftLabel {
       top: calc(50%);
       left: -12rem;
       transform: translateY(-50%);
     }
-    /* X軸 右端 */
     #xRightLabel {
       top: calc(50%);
       right: -12rem;
       transform: translateY(-50%);
     }
-    /* Y軸 上端 */
     #yTopLabel {
       top: -100px;
       left: calc(50% + 1px);
       transform: translateX(-50%);
     }
-    /* Y軸 下端 */
     #yBottomLabel {
       bottom: -100px;
       left: calc(50% + 1px);
@@ -169,46 +155,206 @@
       color: #999;
       font-size: 40px;
     }
+
+    /*―――――――――――――――――――――――――――――――――――――――――――
+      保存・履歴エリアのスタイル
+    ――――――――――――――――――――――――――――――――――――――――――――*/
+    #controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 600px;
+      margin-bottom: 20px;
+    }
+    #controls button {
+      margin: 5px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #controls select {
+      margin: 5px;
+      width: 100%;
+      font-size: 16px;
+      padding: 4px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>四象限メーカー</h1>
-<!--  <p class="instructions">
+  <!-- 編集可能なタイトル -->
+  <h1 contenteditable="true" id="pageTitle">四象限メーカー</h1>
+
+  <!--（必要なら操作説明を表示させる）-->
+  <!--
+  <p class="instructions">
     ● 各象限（Ⅰ〜Ⅳ象限）の中央に直接テキストを入力できます。<br>
     ● X軸や Y軸の端にもラベルを置いておき、クリックして入力・編集が可能です。<br>
-    ● 四象限の大きさ・軸の位置は固定なので、軸の最小／最大値は気にせずラベルだけ編集してください。
+    ● 完了したら「保存」を押すと、履歴として左下のリストに残ります。<br>
+    ● 履歴から選択して「再入力」を押すと、各テキストが復元されます。
   </p>
--->
+  -->
+
+  <!-- 四象限表示エリア -->
   <div id="quadrantContainer">
-    <!-- X軸 (水平線) -->
     <div id="axisX"></div>
-    <!-- Y軸 (垂直線) -->
     <div id="axisY"></div>
 
-    <!-- Ⅰ象限 (右上) のテキストエリア -->
     <div id="quad1" class="quadrant">
       <span contenteditable="true" id="quad1Text"></span>
     </div>
-    <!-- Ⅱ象限 (左上) のテキストエリア -->
     <div id="quad2" class="quadrant">
       <span contenteditable="true" id="quad2Text"></span>
     </div>
-    <!-- Ⅲ象限 (左下) のテキストエリア -->
     <div id="quad3" class="quadrant">
       <span contenteditable="true" id="quad3Text"></span>
     </div>
-    <!-- Ⅳ象限 (右下) のテキストエリア -->
     <div id="quad4" class="quadrant">
       <span contenteditable="true" id="quad4Text"></span>
     </div>
 
-    <!-- 軸の端に置くラベル（contenteditable） -->
     <span contenteditable="true" class="axis-label" id="xLeftLabel"></span>
     <span contenteditable="true" class="axis-label" id="xRightLabel"></span>
     <span contenteditable="true" class="axis-label" id="yTopLabel"></span>
     <span contenteditable="true" class="axis-label" id="yBottomLabel"></span>
   </div>
 
+  <!-- 保存・履歴リスト・再入力ボタン -->
+  <div id="controls">
+    <button id="saveBtn">保存</button>
+    <select id="savedSetsSelect">
+      <option value="" disabled selected>保存履歴を選択</option>
+    </select>
+    <button id="loadBtn">再入力</button>
+  </div>
+
+  <script>
+    // localStorage に保存するキー名
+    const STORAGE_KEY = 'quadrantSavedSets';
+
+    // ページロード時に保存履歴を読み込んでプルダウンを作る
+    window.addEventListener('DOMContentLoaded', () => {
+      populateSavedSets();
+    });
+
+    // 「保存」ボタンが押されたとき
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      saveCurrentSet();
+    });
+
+    // 「再入力」ボタンが押されたとき
+    document.getElementById('loadBtn').addEventListener('click', () => {
+      loadSelectedSet();
+    });
+
+    // ──────────────────────────────────────────────
+    // 保存済みセットを localStorage から読み込み、プルダウンに反映
+    function populateSavedSets() {
+      const select = document.getElementById('savedSetsSelect');
+      // まず既存の <option> を残しつつ、履歴部分（value属性あり）をクリア
+      Array.from(select.options).forEach(opt => {
+        if (opt.value) select.removeChild(opt);
+      });
+
+      const savedSets = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      savedSets.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id; // 一意のIDで管理
+        // 表示テキストは「タイトル (保存日時)」
+        option.textContent = `${item.title || '(無題)'} (${item.savedAt})`;
+        select.appendChild(option);
+      });
+    }
+
+    // ──────────────────────────────────────────────
+    // 現在の入力内容を取得して保存
+    function saveCurrentSet() {
+      // 各要素のテキストを取得
+      const title       = document.getElementById('pageTitle').innerText.trim();
+      const quad1Text   = document.getElementById('quad1Text').innerText.trim();
+      const quad2Text   = document.getElementById('quad2Text').innerText.trim();
+      const quad3Text   = document.getElementById('quad3Text').innerText.trim();
+      const quad4Text   = document.getElementById('quad4Text').innerText.trim();
+      const xLeftLabel  = document.getElementById('xLeftLabel').innerText.trim();
+      const xRightLabel = document.getElementById('xRightLabel').innerText.trim();
+      const yTopLabel   = document.getElementById('yTopLabel').innerText.trim();
+      const yBottomLabel= document.getElementById('yBottomLabel').innerText.trim();
+
+      // 保存日時の文字列を生成する (例: 2025-06-05 21:05:30)
+      const now = new Date();
+      const savedAt = now.getFullYear() + '-' +
+                      String(now.getMonth()+1).padStart(2,'0') + '-' +
+                      String(now.getDate()).padStart(2,'0') + ' ' +
+                      String(now.getHours()).padStart(2,'0') + ':' +
+                      String(now.getMinutes()).padStart(2,'0') + ':' +
+                      String(now.getSeconds()).padStart(2,'0');
+
+      // 一意のID（ミリ秒タイムスタンプ）をつける
+      const id = String(Date.now());
+
+      // 保存すべきオブジェクトを作成
+      const newSet = {
+        id,
+        title,
+        quad1Text,
+        quad2Text,
+        quad3Text,
+        quad4Text,
+        xLeftLabel,
+        xRightLabel,
+        yTopLabel,
+        yBottomLabel,
+        savedAt
+      };
+
+      // 既存の配列を取得し、追加してから localStorage に書き戻す
+      const savedSets = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      savedSets.push(newSet);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedSets));
+
+      // プルダウンに新しい履歴を追加
+      const select = document.getElementById('savedSetsSelect');
+      const option = document.createElement('option');
+      option.value = newSet.id;
+      option.textContent = `${newSet.title || '(無題)'} (${newSet.savedAt})`;
+      select.appendChild(option);
+
+      // 成功メッセージ（任意）
+      alert('保存しました: ' + (newSet.title || '(無題)'));
+    }
+
+    // ──────────────────────────────────────────────
+    // プルダウンで選択された履歴を読み込み、各項目に再入力する
+    function loadSelectedSet() {
+      const select = document.getElementById('savedSetsSelect');
+      const selectedId = select.value;
+      if (!selectedId) {
+        alert('まず保存履歴から選択してください。');
+        return;
+      }
+
+      // localStorage から配列を取得し、該当IDを探す
+      const savedSets = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const target = savedSets.find(item => item.id === selectedId);
+      if (!target) {
+        alert('選択されたデータが見つかりません。');
+        return;
+      }
+
+      // 各要素に値をセットする
+      document.getElementById('pageTitle').innerText    = target.title;
+      document.getElementById('quad1Text').innerText     = target.quad1Text;
+      document.getElementById('quad2Text').innerText     = target.quad2Text;
+      document.getElementById('quad3Text').innerText     = target.quad3Text;
+      document.getElementById('quad4Text').innerText     = target.quad4Text;
+      document.getElementById('xLeftLabel').innerText    = target.xLeftLabel;
+      document.getElementById('xRightLabel').innerText   = target.xRightLabel;
+      document.getElementById('yTopLabel').innerText     = target.yTopLabel;
+      document.getElementById('yBottomLabel').innerText  = target.yBottomLabel;
+
+      // 成功メッセージ（任意）
+      alert('再入力しました: ' + (target.title || '(無題)'));
+    }
+  </script>
 </body>
 </html>
